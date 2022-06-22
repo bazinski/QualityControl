@@ -5,7 +5,6 @@
 #include <TLine.h>
 #include <TH1F.h>
 #include <TH2F.h>
-#include <TLine.h>
 #include <TProfile.h>
 #include <TProfile2D.h>
 #include <TStopwatch.h>
@@ -45,6 +44,13 @@ void DigitsTask::retrieveCCDBSettings()
   if (mNoiseMap == nullptr) {
     ILOG(Info, Support) << "mNoiseMap is null, no noisy mcm reduction" << ENDM;
   }
+  mChamberStatus = mgr.get<o2::trd::HalfChamberStatusQC>("/TRD/Calib/HalfChamberStatusQC");
+  if (mChamberStatus == nullptr) {
+    ILOG(Info, Support) << "mChamberStatus is null, no chamber status to display" << ENDM;
+  }
+  // else{
+  //fillTrdMaskHistsPerLayer();
+  // }
 }
 
 void DigitsTask::drawTrdLayersGrid(TH2F* hist)
@@ -80,14 +86,13 @@ void DigitsTask::drawTrdLayersGrid(TH2F* hist)
   }
   for (int iSec = 1; iSec < 18; ++iSec) {
     float yPos = iSec * 144 - 0.5;
-    line = new TLine(0, yPos, 76, yPos);
+    line = new TLine(0, yPos, 75.5, yPos);
     line->SetLineStyle(kDashed);
     line->SetLineColor(kBlack);
     hist->GetListOfFunctions()->Add(line);
   }
 
   ILOG(Info, Support) << "Layer Grid redrawn in check for : " << hist->GetName() << ENDM;
-  ILOG(Info, Support) << "Layer Grid redrawn in hist has function count of :  " << hist->GetListOfFunctions()->GetSize() << ENDM;
 }
 
 void DigitsTask::drawLinesMCM(TH2F* histo)
@@ -291,10 +296,17 @@ void DigitsTask::buildHistograms()
     if (cn > 29)
       cn = 0;
   }
+  buildDigitLayers();
+}
 
+void DigitsTask::buildDigitLayers()
+{
   for (int iLayer = 0; iLayer < 6; ++iLayer) {
-    mLayers.push_back(new TH2F(Form("DigitsPerLayer/layer%i", iLayer), Form("Digit count per pad in layer %i;stack;sector", iLayer), 76, -0.5, 75.5, 2592, -0.5, 2591.5));
-    auto xax = mLayers.back()->GetXaxis();
+    //mLayersCanvas[iLayer].reset(new TCanvas(Form("DigitsPerLayer/LayerCanvas_%i",iLayer),Form("Layer %i",iLayer)));
+    mLayers[iLayer].reset(new TH2F(Form("DigitsPerLayer/layer%i", iLayer), Form("Digit count per pad in layer %i;stack;sector", iLayer), 76, -0.5, 75.5, 2592, -0.5, 2591.5));
+    mLayersMask[iLayer].reset(new TH2F(Form("layer%i_mask", iLayer), "", 76, -0.5, 75.5, 144, -0.5, 143.5));
+
+    auto xax = mLayers[iLayer].get()->GetXaxis();
     xax->SetBinLabel(8, "0");
     xax->SetBinLabel(24, "1");
     xax->SetBinLabel(38, "2");
@@ -304,7 +316,7 @@ void DigitsTask::buildHistograms()
     xax->SetTickSize(0.01);
     xax->SetLabelSize(0.045);
     xax->SetLabelOffset(0.01);
-    auto yax = mLayers.back()->GetYaxis();
+    auto yax = mLayers[iLayer].get()->GetYaxis();
     for (int iSec = 0; iSec < 18; ++iSec) {
       auto lbl = std::to_string(iSec);
       yax->SetBinLabel(iSec * 144 + 72, lbl.c_str());
@@ -313,11 +325,73 @@ void DigitsTask::buildHistograms()
     yax->SetTickSize(0.01);
     yax->SetLabelSize(0.045);
     yax->SetLabelOffset(0.01);
-    mLayers.back()->SetStats(0);
-    drawTrdLayersGrid(mLayers.back());
-    getObjectsManager()->startPublishing(mLayers.back());
-    getObjectsManager()->setDefaultDrawOptions(mLayers.back()->GetName(), "COLZ");
-    getObjectsManager()->setDisplayHint(mLayers.back(), "logz");
+    mLayers[iLayer].get()->SetStats(0);
+
+    //mLayersMask[iLayer].get()->SetMarkerColor(kRed);
+    //mLayersMask[iLayer].get()->SetMarkerSize(0.9);
+    //mLayersMask[iLayer].get()->SetStats(0);
+    //mLayersMask[iLayer].get()->SetMarkerStyle(2);
+    //mLayersMask[iLayer].get()->Draw("text same");
+    drawTrdLayersGrid(mLayers[iLayer].get());
+    fillTrdMaskHistsPerLayer(iLayer); //drawHashOnLayers(iLayer,1);
+    //getObjectsManager()->startPublishing(mLayersCanvas[iLayer].get());
+    //getObjectsManager()->setDefaultDrawOptions(mLayersCanvas[iLayer]->GetName(), "COLZ");
+    //getObjectsManager()->setDisplayHint(mLayersCanvas[iLayer].get(), "logz");
+    getObjectsManager()->startPublishing(mLayers[iLayer].get());
+    getObjectsManager()->setDefaultDrawOptions(mLayers[iLayer]->GetName(), "COLZ");
+    getObjectsManager()->setDisplayHint(mLayers[iLayer].get(), "logz");
+  }
+}
+
+void DigitsTask::drawHashOnLayers(int layer, int hcid, int col, int rowstart, int rowend)
+{
+  //instead of using overlays, draw a simple box in red with a cross on it.
+
+  std::pair<float, float> topright, bottomleft; //coordinates of box
+  TLine* boxlines[8];
+  int det = hcid / 2;
+  int side = hcid % 2;
+  int sec = hcid / 60;
+  bottomleft.first = rowstart - 0.5;
+  bottomleft.second = sec * 144;
+  topright.first = rowend - 0.5;
+  topright.second = sec * 144 + 72;
+  LOG(info) << "Box for hcid : " << hcid << ": " << bottomleft.first << ":" << bottomleft.second << " -- " << topright.first << ":" << topright.second;
+
+  boxlines[0] = new TLine(bottomleft.first, bottomleft.second, topright.first, bottomleft.second);                                                                                     //bottom
+  boxlines[1] = new TLine(bottomleft.first, topright.second, topright.first, topright.second);                                                                                         // top
+  boxlines[2] = new TLine(bottomleft.first, bottomleft.second, bottomleft.first, topright.second);                                                                                     // left
+  boxlines[3] = new TLine(topright.first, bottomleft.second, topright.first, topright.second);                                                                                         // right
+  boxlines[4] = new TLine(bottomleft.first, topright.second - 36, topright.first, topright.second - 36);                                                                               //horizontal middle
+  boxlines[5] = new TLine(topright.first, bottomleft.second, bottomleft.first, topright.second);                                                                                       //backslash
+  boxlines[6] = new TLine(bottomleft.first, bottomleft.second, topright.first, topright.second);                                                                                       //forwardslash
+  boxlines[7] = new TLine(bottomleft.first + (topright.first - bottomleft.first) / 2, bottomleft.second, bottomleft.first + (topright.first - bottomleft.first) / 2, topright.second); //vertical middle
+  for (int line = 0; line < 8; ++line) {
+    boxlines[line]->SetLineColor(kRed);
+    mLayers[layer]->GetListOfFunctions()->Add(boxlines[line]);
+  }
+}
+
+void DigitsTask::fillTrdMaskHistsPerLayer(int iLayer)
+{
+  if (mChamberStatus == nullptr) {
+    //protect for if the chamber status is not pulled from the ccdb for what ever reason.
+    ILOG(Info, Support) << "No half chamber status object to be able to fill the mask" << ENDM;
+  } else {
+    for (int iSec = 0; iSec < 18; ++iSec) {
+      for (int iStack = 0; iStack < 5; ++iStack) {
+        int rowMax = (iStack == 2) ? 12 : 16;
+        for (int side = 0; side < 2; ++side) {
+          int det = iSec * 30 + iStack * 6 + iLayer;
+          int hcid = (side == 0) ? det * 2 : det * 2 + 1;
+          int rowstart = iStack < 3 ? iStack * 16 : 44 + (iStack - 3) * 16;                 // pad row within whole sector
+          int rowend = iStack < 3 ? rowMax + iStack * 16 : rowMax + 44 + (iStack - 3) * 16; // pad row within whole sector
+          if (mChamberStatus->isMasked(hcid)) {
+            drawHashOnLayers(iLayer, hcid, 0, rowstart, rowend);
+          }
+        }
+      }
+    }
   }
 }
 
@@ -362,9 +436,9 @@ void DigitsTask::initialize(o2::framework::InitContext& /*ctx*/)
     ILOG(Info, Support) << "configure() : using default skip shared digits = " << mSkipSharedDigits << ENDM;
   }
 
+  retrieveCCDBSettings();
   buildHistograms();
 
-  retrieveCCDBSettings();
 }
 
 void DigitsTask::startOfActivity(Activity& /*activity*/)
@@ -715,9 +789,9 @@ void DigitsTask::reset()
     h->Reset();
   }; // ph2DSM;
 
-  for (auto layer : mLayers) {
-    layer->Reset();
-    drawTrdLayersGrid(layer);
-  }
+  //  for (auto layer : mLayersCanvas) {
+  //    layer.get()->Reset();
+  //    drawTrdLayersGrid(layer.get());
+  //  }
 }
 } // namespace o2::quality_control_modules::trd

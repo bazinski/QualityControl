@@ -20,6 +20,8 @@
 #include "QualityControl/TaskInterface.h"
 #include <array>
 #include "DataFormatsTRD/NoiseCalibration.h"
+#include "DataFormatsTRD/NoiseCalibration.h"
+#include "TRDQC/StatusHelper.h"
 
 class TH1F;
 class TH2F;
@@ -28,6 +30,8 @@ class TH2D;
 class TLine;
 class TProfile;
 class TProfile2D;
+class TCanvas;
+
 using namespace o2::quality_control::core;
 
 namespace o2::quality_control_modules::trd
@@ -57,6 +61,9 @@ class DigitsTask final : public TaskInterface
   void drawTrdLayersGrid(TH2F* hist);
   void retrieveCCDBSettings();
   void drawLinesOnPulseHeight(TH1F* h);
+  void fillTrdMaskHistsPerLayer(int iLayer);
+  void buildDigitLayers();
+  void drawHashOnLayers(int layer, int hcid, int col, int rowstart, int rowend);
 
  private:
   // limits
@@ -103,9 +110,13 @@ class DigitsTask final : public TaskInterface
   std::shared_ptr<TProfile> mPulseHeightpro = nullptr;
   std::shared_ptr<TProfile2D> mPulseHeightperchamber = nullptr;
   std::array<std::shared_ptr<TH1F>, 540> mPulseHeightPerChamber_1D; // ph2DSM;
-  std::vector<TH2F*> mLayers;
+  std::array<std::shared_ptr<TH2F>, 6> mLayers;
+  std::array<std::shared_ptr<TH2F>, 6> mLayersMask;
+  std::array<std::shared_ptr<TCanvas>, 6> mLayersCanvas;
+
   // information pulled from ccdb
   o2::trd::NoiseStatusMCM* mNoiseMap = nullptr;
+  o2::trd::HalfChamberStatusQC* mChamberStatus = nullptr;
 };
 
 } // namespace o2::quality_control_modules::trd
