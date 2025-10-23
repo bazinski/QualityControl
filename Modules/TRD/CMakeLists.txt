@@ -2,8 +2,7 @@
 
 add_library(O2QcTRD)
 
-target_sources(O2QcTRD PRIVATE
-              src/CalibReductorTRD.cxx 
+target_sources(O2QcTRD PRIVATE src/CalibReductorTRD.cxx 
               src/TrackletCountCheck.cxx
               src/PulsePositionCheck.cxx
               src/TrackingTask.cxx

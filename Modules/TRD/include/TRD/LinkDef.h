@@ -18,4 +18,5 @@
 #pragma link C++ class o2::quality_control_modules::trd::RawDataCheckStats + ;
 #pragma link C++ class o2::quality_control_modules::trd::RawDataCheckSizes + ;
 #pragma link C++ class o2::quality_control_modules::trd::CalibReductorTRD + ;
+#pragma link C++ class o2::quality_control_modules::trd::baz+;
 #endif
