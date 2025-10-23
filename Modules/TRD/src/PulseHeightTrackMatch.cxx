@@ -42,11 +42,19 @@ void PulseHeightTrackMatch::buildHistograms()
   drawLinesOnPulseHeight(mPulseHeightpro.get());
   mPulseHeightpro.get()->Sumw2();
   getObjectsManager()->startPublishing(mPulseHeightpro.get());
+  //with pretrigger phase included
+  mPulseHeightproHD.reset(new TProfile("PulseHeight/mPulseHeightproHD", "PulseHeight with pretriggerphase;Timebins;ADC Counts", 120, -0.5, 29.5));
+  mPulseHeightproHD.get()->Sumw2();
+  getObjectsManager()->startPublishing(mPulseHeightproHD.get());
 
   mPulseHeightperchamber.reset(new TProfile2D("PulseHeight/mPulseHeightperchamber", "PulseHeight per chamber;Timebin;Chamber", 30, -0.5, 29.5, 540, 0, 540));
   mPulseHeightperchamber.get()->Sumw2();
   getObjectsManager()->startPublishing(mPulseHeightperchamber.get());
   getObjectsManager()->setDefaultDrawOptions(mPulseHeightperchamber.get()->GetName(), "colz");
+  mPulseHeightperchamberHD.reset(new TProfile2D("PulseHeight/mPulseHeightperchamberHD", "PulseHeight per chamber with pretriggerphase;Timebin;Chamber", 120, -0.5, 29.5, 540, 0, 540));
+  mPulseHeightperchamberHD.get()->Sumw2();
+  getObjectsManager()->startPublishing(mPulseHeightperchamberHD.get());
+  getObjectsManager()->setDefaultDrawOptions(mPulseHeightperchamberHD.get()->GetName(), "colz");
 }
 
 void PulseHeightTrackMatch::initialize(o2::framework::InitContext& /*ctx*/)
@@ -111,11 +119,19 @@ void PulseHeightTrackMatch::startOfCycle()
 void PulseHeightTrackMatch::monitorData(o2::framework::ProcessingContext& ctx)
 {
   auto phDataArr = ctx.inputs().get<gsl::span<o2::trd::PHData>>("phValues");
+  auto phDataArrHD = ctx.inputs().get<gsl::span<o2::trd::PHDataHD>>("phValuesHD");
 
   for (const auto& phData : phDataArr) {
     if (mTrackType[phData.getType()]) {
       mPulseHeightpro->Fill(phData.getTimebin(), phData.getADC());
       mPulseHeightperchamber->Fill(phData.getTimebin(), phData.getDetector(), phData.getADC());
+    }
+  }
+  //the size of both spans *should* be the same, but incase not safer for a second for loop
+  for (const auto& phDataHD : phDataArrHD) {
+    if (mTrackType[phDataHD.getType()]) {
+      mPulseHeightpro->Fill(phDataHD.getTimebin(), phDataHD.getADC());
+      mPulseHeightperchamber->Fill(phDataHD.getTimebin(), phDataHD.getDetector(), phDataHD.getADC());
     }
   }
 }
@@ -148,5 +164,7 @@ void PulseHeightTrackMatch::reset()
   ILOG(Debug, Devel) << "Resetting the histogram" << ENDM;
   mPulseHeightpro->Reset();
   mPulseHeightperchamber->Reset();
+  mPulseHeightproHD->Reset();
+  mPulseHeightperchamberHD->Reset();
 }
 } // namespace o2::quality_control_modules::trd
