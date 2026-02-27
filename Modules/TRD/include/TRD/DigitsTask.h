@@ -49,6 +49,7 @@ class DigitsTask final : public TaskInterface
   void reset() override;
   void buildHistograms();
   void drawLinesOnPulseHeight(TH1F* h);
+  void drawLinesOnPulseHeightHD(TH1F* h);
   void buildChamberIgnoreBP();
 
  private:
@@ -81,6 +82,11 @@ class DigitsTask final : public TaskInterface
   std::array<std::shared_ptr<TH1F>, o2::trd::constants::NSECTOR> mPulseHeight2DperSM;
   std::shared_ptr<TProfile> mPulseHeightpro = nullptr;
   std::shared_ptr<TProfile2D> mPulseHeightperchamber = nullptr;
+  std::shared_ptr<TH1F> mPulseHeightHD = nullptr;
+  std::shared_ptr<TH2F> mTotalPulseHeightHD2D = nullptr;
+  std::array<std::shared_ptr<TH1F>, o2::trd::constants::NSECTOR> mPulseHeightHD2DperSM;
+  std::shared_ptr<TProfile> mPulseHeightHDpro = nullptr;
+  std::shared_ptr<TProfile2D> mPulseHeightHDperchamber = nullptr;
   std::array<std::shared_ptr<TH2F>, o2::trd::constants::NLAYER> mLayers;
 
   // CCDB objects
