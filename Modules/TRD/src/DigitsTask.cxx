@@ -106,23 +106,40 @@ void DigitsTask::buildHistograms()
   drawLinesOnPulseHeight(mPulseHeight.get());
   getObjectsManager()->startPublishing(mPulseHeight.get());
   mPulseHeight.get()->GetYaxis()->SetTickSize(0.01);
+  mPulseHeightHD.reset(new TH1F("PulseHeightHD1D", "PH spectrum 1D (with phase);time bin;ADC sum", 120, -0.5, 29.5));
+  drawLinesOnPulseHeight(mPulseHeightHD.get());
+  getObjectsManager()->startPublishing(mPulseHeightHD.get());
+  mPulseHeightHD.get()->GetYaxis()->SetTickSize(0.01);
 
   mTotalPulseHeight2D.reset(new TH2F("PulseHeight2D", "PH spectrum 2D;time bin;ADC sum", 30, 0., 30., 200, 0., 200.));
   getObjectsManager()->startPublishing(mTotalPulseHeight2D.get());
   getObjectsManager()->setDefaultDrawOptions(mTotalPulseHeight2D->GetName(), "COLZ");
+  mTotalPulseHeightHD2D.reset(new TH2F("PulseHeightHD2D", "PH spectrum 2D (with phase);time bin;ADC sum", 120, 0., 30., 200, 0., 200.));
+  getObjectsManager()->startPublishing(mTotalPulseHeightHD2D.get());
+  getObjectsManager()->setDefaultDrawOptions(mTotalPulseHeightHD2D->GetName(), "COLZ");
+
 
   mPulseHeightpro.reset(new TProfile("PulseHeightProfile", "PH spectrum for all chambers combined;time bin;ADC sum", 30, -0.5, 29.5));
   mPulseHeightpro.get()->Sumw2();
+  getObjectsManager()->startPublishing(mPulseHeightpro.get());
+  mPulseHeightHDpro.reset(new TProfile("PulseHeightHDProfile", "PH spectrum for all chambers combined (with phase);time bin;ADC sum", 120, -0.5, 29.5));
+  mPulseHeightHDpro.get()->Sumw2();
   getObjectsManager()->startPublishing(mPulseHeightpro.get());
 
   mPulseHeightperchamber.reset(new TProfile2D("PulseHeightPerChamber", "PH spectrum for all chambers;time bin;chamber", 30, -0.5, 29.5, 540, -0.5, 539.5));
   mPulseHeightperchamber.get()->Sumw2();
   getObjectsManager()->startPublishing(mPulseHeightperchamber.get());
   getObjectsManager()->setDefaultDrawOptions(mPulseHeightperchamber.get()->GetName(), "colz");
+  mPulseHeightHDperchamber.reset(new TProfile2D("PulseHeightHDPerChamber", "PH spectrum for all chambers (with phase);time bin;chamber", 120, -0.5, 29.5, 540, -0.5, 539.5));
+  mPulseHeightHDperchamber.get()->Sumw2();
+  getObjectsManager()->startPublishing(mPulseHeightHDperchamber.get());
+  getObjectsManager()->setDefaultDrawOptions(mPulseHeightHDperchamber.get()->GetName(), "colz");
 
   for (int iSec = 0; iSec < NSECTOR; ++iSec) {
     mPulseHeight2DperSM[iSec].reset(new TH1F(Form("PulseHeight_%i", iSec), Form("PH spectrum for sector %i;time bin;ADC sum count", iSec), 30, -0.5, 29.5));
     getObjectsManager()->startPublishing(mPulseHeight2DperSM[iSec].get());
+    mPulseHeightHD2DperSM[iSec].reset(new TH1F(Form("PulseHeightHD_%i", iSec), Form("PH spectrum for sector %i (with phase);time bin;ADC sum count", iSec), 120, -0.5, 29.5));
+    getObjectsManager()->startPublishing(mPulseHeightHD2DperSM[iSec].get());
   }
 
   // Build digits layers
@@ -258,11 +275,18 @@ void DigitsTask::monitorData(o2::framework::ProcessingContext& ctx)
           if (lowestSum > mPulseHeightThreshold) {
             for (int tb = 0; tb < TIMEBINS; tb++) {
               int phVal = (digit.getADC()[tb] + digitLeft->getADC()[tb] + digitRight->getADC()[tb]);
+              int phValHD = (digit.getADCvalWithPhase(tb) + digitLeft.getADCvalWithPhase(tb) + digitRight.getADCvalWithPhase(tb);
               mPulseHeight->Fill(tb, phVal);
               mTotalPulseHeight2D->Fill(tb, phVal);
               mPulseHeight2DperSM[sector]->Fill(tb, phVal);
               mPulseHeightpro->Fill(tb, phVal);
               mPulseHeightperchamber->Fill(tb, detector, phVal);
+              // versions with phase incorporated.
+              mPulseHeightHD->Fill(tb, phValHD);
+              mTotalPulseHeightHD2D->Fill(tb, phValHD);
+              mPulseHeightHD2DperSM[sector]->Fill(tb, phValHD);
+              mPulseHeightHDpro->Fill(tb, phValHD);
+              mPulseHeightHDperchamber->Fill(tb, detector, phValHD);
             } // loop over time bins
           }   // lower ADC sum above threshold
         }     // local ADC maximum
@@ -281,6 +305,21 @@ void DigitsTask::drawLinesOnPulseHeight(TH1F* h)
   lmax->SetLineColor(kRed);
   h->GetListOfFunctions()->Add(lmin);
   h->GetListOfFunctions()->Add(lmax);
+}
+
+void DigitsTask::drawLinesOnPulseHeightHD(TH1F* h)
+{
+  //the same as above but hopefully lines extending from top to bottom of y-axis
+  double ymin = h->GetMinimum();
+  double ymax = h->GetMaximum();
+  TLine* lstart = new TLine(mPulseHeightPeakRegion.first, ymin, mPulseHeightPeakRegion.first, ymax);
+  TLine* lend = new TLine(mPulseHeightPeakRegion.second, ymin, mPulseHeightPeakRegion.second, ymax);
+  lstart->SetLineStyle(2);
+  lend->SetLineStyle(2);
+  lstart->SetLineColor(kRed);
+  lend->SetLineColor(kRed);
+  h->GetListOfFunctions()->Add(lstart);
+  h->GetListOfFunctions()->Add(lend);
 }
 
 void DigitsTask::buildChamberIgnoreBP()
@@ -353,7 +392,14 @@ void DigitsTask::reset()
   mPulseHeight->Reset();
   mPulseHeightpro->Reset();
   mPulseHeightperchamber->Reset();
+  mTotalPulseHeightHD2D->Reset();
+  mPulseHeightHD->Reset();
+  mPulseHeightHDpro->Reset();
+  mPulseHeightHDperchamber->Reset();
   for (auto& h : mPulseHeight2DperSM) {
+    h->Reset();
+  }
+  for (auto& h : mPulseHeightHD2DperSM) {
     h->Reset();
   }
   for (auto& h : mHCMCM) {
