@@ -284,6 +284,7 @@ void DigitsTask::monitorData(o2::framework::ProcessingContext& ctx)
             for (int tb = 0; tb < TIMEBINS; tb++) {
               int phValHD = digit.getADC()[tb] + digitLeft->getADC()[tb] + digitRight->getADC()[tb];
               float tbphase=(tb<<2)+ digit.getPreTrigPhase();
+              LOG(info,"Pretrig phase is : {} tb {} tbphase {}", digit.getPreTrigPhase(), tb, tbphase);
               tbphase= tbphase/4; // get the tb back into 0-30, its currently in 0-120;
               mPulseHeightHD->Fill(tbphase, phValHD);
               mTotalPulseHeightHD2D->Fill(tbphase, phValHD);
