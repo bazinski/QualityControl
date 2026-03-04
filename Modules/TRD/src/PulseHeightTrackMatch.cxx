@@ -131,8 +131,9 @@ void PulseHeightTrackMatch::monitorData(o2::framework::ProcessingContext& ctx)
   }
   for (const auto& phDataHD : phDataHDArr) {
     if (mTrackType[phDataHD.getType()]) {
-      mPulseHeightproHD->Fill(phDataHD.getTimebin(), phDataHD.getADC());
-      mPulseHeightperchamberHD->Fill(phDataHD.getTimebin(), phDataHD.getDetector(), phDataHD.getADC());
+      float tb= ((float)phDataHD.getTimebin())/4;
+      mPulseHeightproHD->Fill(tb, phDataHD.getADC());
+      mPulseHeightperchamberHD->Fill(tb, phDataHD.getDetector(), phDataHD.getADC());
     }
   }
 }
