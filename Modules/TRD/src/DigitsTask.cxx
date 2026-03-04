@@ -275,19 +275,21 @@ void DigitsTask::monitorData(o2::framework::ProcessingContext& ctx)
           if (lowestSum > mPulseHeightThreshold) {
             for (int tb = 0; tb < TIMEBINS; tb++) {
               int phVal = (digit.getADC()[tb] + digitLeft->getADC()[tb] + digitRight->getADC()[tb]);
-              int phValHD = (digit.getADCvalWithPhase(tb) + digitLeft->getADCvalWithPhase(tb) + digitRight->getADCvalWithPhase(tb));
               mPulseHeight->Fill(tb, phVal);
               mTotalPulseHeight2D->Fill(tb, phVal);
               mPulseHeight2DperSM[sector]->Fill(tb, phVal);
               mPulseHeightpro->Fill(tb, phVal);
               mPulseHeightperchamber->Fill(tb, detector, phVal);
-              // versions with phase incorporated.
-              mPulseHeightHD->Fill(tb, phValHD);
-              mTotalPulseHeightHD2D->Fill(tb, phValHD);
-              mPulseHeightHD2DperSM[sector]->Fill(tb, phValHD);
-              mPulseHeightHDpro->Fill(tb, phValHD);
-              mPulseHeightHDperchamber->Fill(tb, detector, phValHD);
             } // loop over time bins
+            for (int tb = 0; tb < TIMEBINS; tb++) {
+              int phValHD = digit.getADC()[tb] + digitLeft->getADC()[tb] + digitRight->getADC()[tb];
+              int tbphase=tb<<2+ digit.getPresitionPhase();
+              mPulseHeightHD->Fill(tbphase, phValHD);
+              mTotalPulseHeightHD2D->Fill(tbphase, phValHD);
+              mPulseHeightHD2DperSM[sector]->Fill(tbphase, phValHD);
+              mPulseHeightHDpro->Fill(tbphase, phValHD);
+              mPulseHeightHDperchamber->Fill(tbphase, detector, phValHD);
+            } // loop over time bins with phase
           }   // lower ADC sum above threshold
         }     // local ADC maximum
       }       // chamber OK

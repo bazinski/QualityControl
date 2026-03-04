@@ -157,13 +157,18 @@ void setupInfologger(const ConfigContext& config, boost::property_tree::ptree co
 WorkflowSpec defineDataProcessing(const ConfigContext& config)
 {
   WorkflowSpec specs;
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
 
   if (!validateArguments(config)) {
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
     return {};
   }
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
   quality_control::ConfigParamGlo::keyValues = config.options().get<std::string>("configKeyValues");
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
 
   auto qcConfigurationSource = config.options().get<std::string>("config");
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
   try {
     // The online QC infrastructure is divided into two parts:
     // - local - QC tasks which are on the same machines as the main processing. We also put Data Sampling there.
@@ -181,82 +186,131 @@ WorkflowSpec defineDataProcessing(const ConfigContext& config)
     //                  The results are stored in the database specified in the config file.
 
     // we set the infologger levels as soon as possible to avoid spamming
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
     auto configTree = ConfigurationFactory::getConfiguration(qcConfigurationSource)->getRecursive();
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
 
     setupInfologger(config, configTree);
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
 
     ILOG(Info, Devel) << "Using config file '" << qcConfigurationSource << "'" << ENDM;
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
     auto keyValuesToOverride = quality_control::core::parseOverrideValues(config.options().get<std::string>("override-values"));
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
     quality_control::core::overrideValues(configTree, keyValuesToOverride);
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
 
     auto workflowType = quality_control::core::workflow_type_helpers::getWorkflowType(config.options());
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
     switch (workflowType) {
       case WorkflowType::Standalone: {
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         ILOG(Debug, Devel) << "Creating a standalone QC workflow." << ENDM;
 
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         if (!config.options().get<bool>("no-data-sampling") && configTree.count("dataSamplingPolicies") > 0) {
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
           ILOG(Debug, Devel) << "Generating Data Sampling" << ENDM;
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
           DataSampling::GenerateInfrastructure(specs, configTree.get_child("dataSamplingPolicies"));
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         } else {
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
           ILOG(Debug, Devel) << "Omitting Data Sampling" << ENDM;
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         }
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         quality_control::generateStandaloneInfrastructure(specs, configTree);
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         break;
       }
       case WorkflowType::Local: {
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         ILOG(Debug, Devel) << "Creating a local QC topology." << ENDM;
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         auto host = config.options().get<std::string>("host").empty()
                       ? boost::asio::ip::host_name()
                       : config.options().get<std::string>("host");
 
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         if (!config.options().get<bool>("no-data-sampling") && configTree.count("dataSamplingPolicies") > 0) {
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
           ILOG(Debug, Devel) << "Generating Data Sampling" << ENDM;
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
           DataSampling::GenerateInfrastructure(specs, configTree.get_child("dataSamplingPolicies"), 1, host);
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         } else {
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
           ILOG(Debug, Devel) << "Omitting Data Sampling" << ENDM;
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         }
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
 
         // Generation of the local QC topology (local QC tasks and their output proxies)
         quality_control::generateLocalInfrastructure(specs, configTree, host);
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         break;
       }
       case WorkflowType::Remote: {
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         ILOG(Debug, Devel) << "Creating a remote QC workflow." << ENDM;
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
 
         // Generation of the remote QC topology (task for QC servers, input proxies, mergers, all check runners, postprocessing)
         quality_control::generateRemoteInfrastructure(specs, configTree);
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         break;
       }
       case WorkflowType::FullChain: {
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         ILOG(Debug, Devel) << "Creating a full QC chain workflow." << ENDM;
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         if (!config.options().get<bool>("no-data-sampling") && configTree.count("dataSamplingPolicies") > 0) {
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
           DataSampling::GenerateInfrastructure(specs, configTree.get_child("dataSamplingPolicies"));
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         }
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         // Generates a full QC chain (data sampling, tasks, mergers, checks, aggregators, postprocessing)
         quality_control::generateFullChainInfrastructure(specs, configTree);
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         break;
       }
       case WorkflowType::LocalBatch: {
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         ILOG(Debug, Devel) << "Creating a local batch QC workflow." << ENDM;
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         if (!config.options().get<bool>("no-data-sampling") && configTree.count("dataSamplingPolicies") > 0) {
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
           ILOG(Debug, Devel) << "Generating Data Sampling" << ENDM;
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
           DataSampling::GenerateInfrastructure(specs, configTree.get_child("dataSamplingPolicies"));
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         } else {
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
           ILOG(Debug, Devel) << "Omitting Data Sampling" << ENDM;
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         }
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
 
         auto localBatchFilePath = config.options().get<std::string>("local-batch");
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         // Generation of the local batch QC workflow (QC tasks and file sink)
         quality_control::generateLocalBatchInfrastructure(specs, configTree, localBatchFilePath);
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         break;
       }
       case WorkflowType::RemoteBatch: {
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         auto remoteBatchFilePath = config.options().get<std::string>("remote-batch");
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         // Creating the remote batch QC topology (file reader, check runners, aggregator runners, postprocessing)
         quality_control::generateRemoteBatchInfrastructure(specs, configTree, remoteBatchFilePath);
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
         break;
       }
     }
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
   } catch (const std::runtime_error& re) {
     ILOG(Fatal, Ops) << "Failed to build the workflow: " << re.what() << ENDM;
     throw;
