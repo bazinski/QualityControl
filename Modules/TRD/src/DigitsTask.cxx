@@ -283,7 +283,7 @@ void DigitsTask::monitorData(o2::framework::ProcessingContext& ctx)
             } // loop over time bins
             for (int tb = 0; tb < TIMEBINS; tb++) {
               int phValHD = digit.getADC()[tb] + digitLeft->getADC()[tb] + digitRight->getADC()[tb];
-              int tbphase=tb<<2+ digit.getPreTriggerPhase();
+              int tbphase=tb<<2+ digit.getPreTrighase();
               mPulseHeightHD->Fill(tbphase, phValHD);
               mTotalPulseHeightHD2D->Fill(tbphase, phValHD);
               mPulseHeightHD2DperSM[sector]->Fill(tbphase, phValHD);
