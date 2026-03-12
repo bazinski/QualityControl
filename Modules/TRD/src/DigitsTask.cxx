@@ -418,7 +418,7 @@ void DigitsTask::endOfCycle()
   for(int i=0;i<120;++i){
     if(phasetotals[i/4]>0){
       mPulseHeightHDcorrected->SetBinContent(i, mPulseHeightHD->GetBinContent(i)/phasescaling[i/4]);
-      for(int j=0;j<??;++j){
+      for(int j=0;j<200;++j){
         mTotalPulseHeightHD2Dcorrected->SetBinContent(i, j, mTotalPulseHeightHD2Dcorrected->GetBinContent(i,j)/phasescaling[i/4]);
       }
       //weighted graphs
