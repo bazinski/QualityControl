@@ -139,7 +139,7 @@ void DigitsTask::buildHistograms()
  
   mPulseHeightHDprocorrected.reset(new TProfile("PulseHeightHDProfilecorrected", "PH spectrum for all chambers combined (with phase corrected);time bin;ADC sum", 120, -0.5, 29.5));
   mPulseHeightHDprocorrected.get()->Sumw2();
-  getObjectsManager()->startPublishing(mPulseHeightprocorrected.get());
+  getObjectsManager()->startPublishing(mPulseHeightHDprocorrected.get());
 
   mPulseHeightperchamber.reset(new TProfile2D("PulseHeightPerChamber", "PH spectrum for all chambers;time bin;chamber", 30, -0.5, 29.5, 540, -0.5, 539.5));
   mPulseHeightperchamber.get()->Sumw2();
@@ -161,7 +161,7 @@ void DigitsTask::buildHistograms()
     getObjectsManager()->startPublishing(mPulseHeight2DperSM[iSec].get());
     mPulseHeightHD2DperSM[iSec].reset(new TH1F(Form("PulseHeightHD_%i", iSec), Form("PH spectrum for sector %i (with phase);time bin;ADC sum count", iSec), 120, -0.5, 29.5));
     getObjectsManager()->startPublishing(mPulseHeightHD2DperSM[iSec].get());
-    mPulseHeightHD2DperSMcorrected[iSec].reset(new TH1F(Form("PulseHeightHD_%i", iSec), Form("PH spectrum for sector %i (with phase);time bin;ADC sum count", iSec), 120, -0.5, 29.5));
+    mPulseHeightHD2DperSMcorrected[iSec].reset(new TH1F(Form("PulseHeightHDcorrected_%i", iSec), Form("PH spectrum for sector %i (with phase corrected);time bin;ADC sum count", iSec), 120, -0.5, 29.5));
     getObjectsManager()->startPublishing(mPulseHeightHD2DperSMcorrected[iSec].get());
   }
 
