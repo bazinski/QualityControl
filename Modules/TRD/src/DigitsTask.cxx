@@ -106,40 +106,63 @@ void DigitsTask::buildHistograms()
   drawLinesOnPulseHeight(mPulseHeight.get());
   getObjectsManager()->startPublishing(mPulseHeight.get());
   mPulseHeight.get()->GetYaxis()->SetTickSize(0.01);
+
   mPulseHeightHD.reset(new TH1F("PulseHeightHD1D", "PH spectrum 1D (with phase);time bin;ADC sum", 120, -0.5, 29.5));
   drawLinesOnPulseHeight(mPulseHeightHD.get());
   getObjectsManager()->startPublishing(mPulseHeightHD.get());
   mPulseHeightHD.get()->GetYaxis()->SetTickSize(0.01);
+  
+  mPulseHeightHDcorrected.reset(new TH1F("PulseHeightHD1Dcorrected", "PH spectrum 1D (with phase corrected);time bin;ADC sum", 120, -0.5, 29.5));
+  drawLinesOnPulseHeight(mPulseHeightHDcorrected.get());
+  getObjectsManager()->startPublishing(mPulseHeightHDcorrected.get());
+  mPulseHeightHDcorrected.get()->GetYaxis()->SetTickSize(0.01);
 
   mTotalPulseHeight2D.reset(new TH2F("PulseHeight2D", "PH spectrum 2D;time bin;ADC sum", 30, 0., 30., 200, 0., 200.));
   getObjectsManager()->startPublishing(mTotalPulseHeight2D.get());
   getObjectsManager()->setDefaultDrawOptions(mTotalPulseHeight2D->GetName(), "COLZ");
+
   mTotalPulseHeightHD2D.reset(new TH2F("PulseHeightHD2D", "PH spectrum 2D (with phase);time bin;ADC sum", 120, 0., 30., 200, 0., 200.));
   getObjectsManager()->startPublishing(mTotalPulseHeightHD2D.get());
   getObjectsManager()->setDefaultDrawOptions(mTotalPulseHeightHD2D->GetName(), "COLZ");
 
+  mTotalPulseHeightHD2Dcorrected.reset(new TH2F("PulseHeightHD2Dcorrected", "PH spectrum 2D (with phase corrected);time bin;ADC sum", 120, 0., 30., 200, 0., 200.));
+  getObjectsManager()->startPublishing(mTotalPulseHeightHD2Dcorrected.get());
+  getObjectsManager()->setDefaultDrawOptions(mTotalPulseHeightHD2Dcorrected->GetName(), "COLZ");
 
   mPulseHeightpro.reset(new TProfile("PulseHeightProfile", "PH spectrum for all chambers combined;time bin;ADC sum", 30, -0.5, 29.5));
   mPulseHeightpro.get()->Sumw2();
   getObjectsManager()->startPublishing(mPulseHeightpro.get());
+  
   mPulseHeightHDpro.reset(new TProfile("PulseHeightHDProfile", "PH spectrum for all chambers combined (with phase);time bin;ADC sum", 120, -0.5, 29.5));
   mPulseHeightHDpro.get()->Sumw2();
   getObjectsManager()->startPublishing(mPulseHeightpro.get());
+ 
+  mPulseHeightHDprocorrected.reset(new TProfile("PulseHeightHDProfilecorrected", "PH spectrum for all chambers combined (with phase corrected);time bin;ADC sum", 120, -0.5, 29.5));
+  mPulseHeightHDprocorrected.get()->Sumw2();
+  getObjectsManager()->startPublishing(mPulseHeightprocorrected.get());
 
   mPulseHeightperchamber.reset(new TProfile2D("PulseHeightPerChamber", "PH spectrum for all chambers;time bin;chamber", 30, -0.5, 29.5, 540, -0.5, 539.5));
   mPulseHeightperchamber.get()->Sumw2();
   getObjectsManager()->startPublishing(mPulseHeightperchamber.get());
   getObjectsManager()->setDefaultDrawOptions(mPulseHeightperchamber.get()->GetName(), "colz");
+ 
   mPulseHeightHDperchamber.reset(new TProfile2D("PulseHeightHDPerChamber", "PH spectrum for all chambers (with phase);time bin;chamber", 120, -0.5, 29.5, 540, -0.5, 539.5));
   mPulseHeightHDperchamber.get()->Sumw2();
   getObjectsManager()->startPublishing(mPulseHeightHDperchamber.get());
   getObjectsManager()->setDefaultDrawOptions(mPulseHeightHDperchamber.get()->GetName(), "colz");
+  
+  mPulseHeightHDperchambercorrected.reset(new TProfile2D("PulseHeightHDPerChambercorrected", "PH spectrum for all chambers (with phase corrected);time bin;chamber", 120, -0.5, 29.5, 540, -0.5, 539.5));
+  mPulseHeightHDperchambercorrected.get()->Sumw2();
+  getObjectsManager()->startPublishing(mPulseHeightHDperchambercorrected.get());
+  getObjectsManager()->setDefaultDrawOptions(mPulseHeightHDperchambercorrected.get()->GetName(), "colz");
 
   for (int iSec = 0; iSec < NSECTOR; ++iSec) {
     mPulseHeight2DperSM[iSec].reset(new TH1F(Form("PulseHeight_%i", iSec), Form("PH spectrum for sector %i;time bin;ADC sum count", iSec), 30, -0.5, 29.5));
     getObjectsManager()->startPublishing(mPulseHeight2DperSM[iSec].get());
     mPulseHeightHD2DperSM[iSec].reset(new TH1F(Form("PulseHeightHD_%i", iSec), Form("PH spectrum for sector %i (with phase);time bin;ADC sum count", iSec), 120, -0.5, 29.5));
     getObjectsManager()->startPublishing(mPulseHeightHD2DperSM[iSec].get());
+    mPulseHeightHD2DperSMcorrected[iSec].reset(new TH1F(Form("PulseHeightHD_%i", iSec), Form("PH spectrum for sector %i (with phase);time bin;ADC sum count", iSec), 120, -0.5, 29.5));
+    getObjectsManager()->startPublishing(mPulseHeightHD2DperSMcorrected[iSec].get());
   }
 
   // Build digits layers
@@ -369,6 +392,63 @@ void DigitsTask::startOfCycle()
 void DigitsTask::endOfCycle()
 {
   ILOG(Debug, Devel) << "endOfCycle" << ENDM;
+  /*
+  std::shared_ptr<TH1F> mPulseHeightHD = nullptr; 
+  std::shared_ptr<TH1F> mPulseHeightHDcorrected = nullptr; **
+  std::shared_ptr<TH2F> mTotalPulseHeightHD2Dcorrected = nullptr; **
+  std::array<std::shared_ptr<TH1F>, o2::trd::constants::NSECTOR> mPulseHeightHD2DperSM;
+  std::shared_ptr<TProfile> mPulseHeightHDpro = nullptr; 
+  std::shared_ptr<TProfile> mPulseHeightHDprocorrected = nullptr; **
+ 
+ std::shared_ptr<TProfile2D> mPulseHeightHDperchambercorrected = nullptr;**
+*/
+  //fix the corrected HD spectra for the prevelance (efficiency) of the relative phases.
+  std::array<float,4> phasetotals{};
+  std::array<float,4> phasescaling{};
+  for(int i=0;i<120;++i){
+    phasetotals[i/4]+= mPulseHeightHD->GetBinContent(i);
+  }
+  const auto maxval =std::max_element(phasetotals.begin(),phasetotals.end());
+  if(*maxval>0){
+    for(int i=0;i<4;++i){
+      phasescaling[i]=phasetotals[i]/ (*maxval);
+    }
+  } 
+
+  for(int i=0;i<120;++i){
+    if(phasetotals[i/4]>0){
+      mPulseHeightHDcorrected->SetBinContent(i, mPulseHeightHD->GetBinContent(i)/phasescaling[i/4]);
+      for(int j=0;j<??;++j){
+        mTotalPulseHeightHD2Dcorrected->SetBinContent(i, j, mTotalPulseHeightHD2Dcorrected->GetBinContent(i,j)/phasescaling[i/4]);
+      }
+      //weighted graphs
+      mPulseHeightHDprocorrected->SetBinContent(i, mPulseHeightHDpro->GetBinContent(i)/phasescaling[i/4]);
+      mPulseHeightHDprocorrected->SetBinError(i, mPulseHeightHDpro->GetBinError(i)/phasescaling[i/4]);
+    }
+  }
+  // now for the per chamber version:
+  for(int chamber=0;chamber<540;++chamber){
+    std::array<float,4> phasetotals{};
+    std::array<float,4> phasescaling{};
+    for(int i=0;i<120;++i){
+      phasetotals[i/4]+= mPulseHeightHDperchamber->GetBinContent(i,chamber);
+    }
+    const auto maxval =std::max_element(phasetotals.begin(),phasetotals.end());
+    if(*maxval>0){
+      for(int i=0;i<4;++i){
+        phasescaling[i]=phasetotals[i]/ (*maxval);
+      }
+      
+    } 
+    for(int i=0;i<120;++i){
+      if(phasetotals[i/4]>0){
+        mPulseHeightHDperchambercorrected->SetBinContent(i, chamber, mPulseHeightHDperchamber->GetBinContent(i)/phasescaling[i/4]);
+        mPulseHeightHDperchambercorrected->SetBinError(i, chamber,mPulseHeightHDperchamber->GetBinError(i)/phasescaling[i/4]);
+      }
+    }
+  }
+
+
 }
 
 void DigitsTask::endOfActivity(const Activity& /*activity*/)
@@ -400,10 +480,16 @@ void DigitsTask::reset()
   mPulseHeightHD->Reset();
   mPulseHeightHDpro->Reset();
   mPulseHeightHDperchamber->Reset();
+  mPulseHeightHDcorrected->Reset();
+  mPulseHeightHDprocorrected->Reset();
+  mPulseHeightHDperchambercorrected->Reset();
   for (auto& h : mPulseHeight2DperSM) {
     h->Reset();
   }
   for (auto& h : mPulseHeightHD2DperSM) {
+    h->Reset();
+  }
+  for (auto& h : mPulseHeightHD2DperSMcorrected) {
     h->Reset();
   }
   for (auto& h : mHCMCM) {

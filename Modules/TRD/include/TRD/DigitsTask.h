@@ -83,10 +83,14 @@ class DigitsTask final : public TaskInterface
   std::shared_ptr<TProfile> mPulseHeightpro = nullptr;
   std::shared_ptr<TProfile2D> mPulseHeightperchamber = nullptr;
   std::shared_ptr<TH1F> mPulseHeightHD = nullptr;
-  std::shared_ptr<TH2F> mTotalPulseHeightHD2D = nullptr;
+  std::shared_ptr<TH1F> mPulseHeightHDcorrected = nullptr;
+  std::shared_ptr<TH2F> mTotalPulseHeightHD2Dcorrected = nullptr;
   std::array<std::shared_ptr<TH1F>, o2::trd::constants::NSECTOR> mPulseHeightHD2DperSM;
+  std::array<std::shared_ptr<TH1F>, o2::trd::constants::NSECTOR> mPulseHeightHD2DperSMcorrected;
   std::shared_ptr<TProfile> mPulseHeightHDpro = nullptr;
+  std::shared_ptr<TProfile> mPulseHeightHDprocorrected = nullptr;
   std::shared_ptr<TProfile2D> mPulseHeightHDperchamber = nullptr;
+  std::shared_ptr<TProfile2D> mPulseHeightHDperchambercorrected = nullptr;
   std::array<std::shared_ptr<TH2F>, o2::trd::constants::NLAYER> mLayers;
 
   // CCDB objects

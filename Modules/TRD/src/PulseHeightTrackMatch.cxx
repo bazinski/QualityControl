@@ -47,6 +47,11 @@ void PulseHeightTrackMatch::buildHistograms()
   drawLinesOnPulseHeightHD(mPulseHeightproHD.get());
   mPulseHeightproHD.get()->Sumw2();
   getObjectsManager()->startPublishing(mPulseHeightproHD.get());
+  
+  mPulseHeightproHDcorrected.reset(new TProfile("PulseHeight/mPulseHeightproHDcorrected", "PulseHeight (corrected for phase presence);Timebins with PreTriggerPhase;ADC Counts", 120, -0.5, 29.5));
+  drawLinesOnPulseHeightHD(mPulseHeightproHDcorrected.get());
+  mPulseHeightproHDcorrected.get()->Sumw2();
+  getObjectsManager()->startPublishing(mPulseHeightproHDcorrected.get());
 
   mPulseHeightperchamber.reset(new TProfile2D("PulseHeight/mPulseHeightperchamber", "PulseHeight per chamber;Timebin;Chamber", 30, -0.5, 29.5, 540, 0, 540));
   mPulseHeightperchamber.get()->Sumw2();
@@ -57,6 +62,11 @@ void PulseHeightTrackMatch::buildHistograms()
   mPulseHeightperchamberHD.get()->Sumw2();
   getObjectsManager()->startPublishing(mPulseHeightperchamberHD.get());
   getObjectsManager()->setDefaultDrawOptions(mPulseHeightperchamberHD.get()->GetName(), "colz");
+  
+  mPulseHeightperchamberHDcorrected.reset(new TProfile2D("PulseHeight/mPulseHeightperchamberHDcorrected", "PulseHeight per chamber (corrected for phase presence);Timebin with PreTriggerPhase;Chamber", 120, -0.5, 29.5, 540, 0, 540));
+  mPulseHeightperchamberHDcorrected.get()->Sumw2();
+  getObjectsManager()->startPublishing(mPulseHeightperchamberHDcorrected.get());
+  getObjectsManager()->setDefaultDrawOptions(mPulseHeightperchamberHDcorrected.get()->GetName(), "colz");
 }
 
 void PulseHeightTrackMatch::initialize(o2::framework::InitContext& /*ctx*/)
@@ -167,6 +177,46 @@ void PulseHeightTrackMatch::drawLinesOnPulseHeightHD(TProfile* h)
 void PulseHeightTrackMatch::endOfCycle()
 {
   ILOG(Debug, Devel) << "endOfCycle" << ENDM;
+  //fix the corrected HD spectra for the prevelance (efficiency) of the relative phases.
+  std::array<float,4> phasetotals{};
+  std::array<float,4> phasescaling{};
+  for(int i=0;i<120;++i){
+    phasetotals[i/4]+= mPulseHeightproHD->GetBinContent(i);
+  }
+  const auto maxval =std::max_element(phasetotals.begin(),phasetotals.end());
+  if(*maxval>0){
+    for(int i=0;i<4;++i){
+      phasescaling[i]=phasetotals[i]/ (*maxval);
+    }
+    
+  } 
+  for(int i=0;i<120;++i){
+    if(phasetotals[i/4]>0){
+      mPulseHeightproHDcorrected->SetBinContent(i, mPulseHeightproHD->GetBinContent(i)/phasescaling[i/4]);
+      mPulseHeightproHDcorrected->SetBinError(i, mPulseHeightproHD->GetBinError(i)/phasescaling[i/4]);
+    }
+  }
+  // now for the per chamber version:
+  for(int chamber=0;chamber<540;++chamber){
+    std::array<float,4> phasetotals{};
+    std::array<float,4> phasescaling{};
+    for(int i=0;i<120;++i){
+      phasetotals[i/4]+= mPulseHeightperchamberHD->GetBinContent(i,chamber);
+    }
+    const auto maxval =std::max_element(phasetotals.begin(),phasetotals.end());
+    if(*maxval>0){
+      for(int i=0;i<4;++i){
+        phasescaling[i]=phasetotals[i]/ (*maxval);
+      }
+      
+    } 
+    for(int i=0;i<120;++i){
+      if(phasetotals[i/4]>0){
+        mPulseHeightperchamberHDcorrected->SetBinContent(i, chamber, mPulseHeightproHD->GetBinContent(i)/phasescaling[i/4]);
+        mPulseHeightperchamberHDcorrected->SetBinError(i, chamber,mPulseHeightproHD->GetBinError(i)/phasescaling[i/4]);
+      }
+    }
+  }
 }
 
 void PulseHeightTrackMatch::endOfActivity(const Activity& /*activity*/)
@@ -182,5 +232,7 @@ void PulseHeightTrackMatch::reset()
   mPulseHeightperchamber->Reset();
   mPulseHeightproHD->Reset();
   mPulseHeightperchamberHD->Reset();
+  mPulseHeightproHDcorrected->Reset();
+  mPulseHeightperchamberHDcorrected->Reset();
 }
 } // namespace o2::quality_control_modules::trd
