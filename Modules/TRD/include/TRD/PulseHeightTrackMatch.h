@@ -64,10 +64,16 @@ class PulseHeightTrackMatch final : public TaskInterface
   std::bitset<4> mTrackType = 0xf; // bitset to select one or a combination of track types 0: ITSTPCTRD, 1: TPCTRD, 2: TRACKLET, 3: OTHERS. Default is 0xf: all tracks
   std::shared_ptr<TProfile> mPulseHeightpro = nullptr;
   std::shared_ptr<TProfile> mPulseHeightproHD = nullptr;
-  std::shared_ptr<TProfile> mPulseHeightproHDcorrected = nullptr;
+  std::shared_ptr<TH1D> mPulseHeight = nullptr;
+  std::shared_ptr<TH1D> mPulseHeightHD = nullptr;
+  std::shared_ptr<TH2D> mPulseHeight2D = nullptr;
+  std::shared_ptr<TH2D> mPulseHeight2DHD = nullptr;
+//  std::shared_ptr<TProfile> mPulseHeightproHDcorrected = nullptr;
   std::shared_ptr<TProfile2D> mPulseHeightperchamber = nullptr;
   std::shared_ptr<TProfile2D> mPulseHeightperchamberHD = nullptr;
-  std::shared_ptr<TProfile2D> mPulseHeightperchamberHDcorrected = nullptr;
+  std::shared_ptr<TH2D> mPulseHeightperchamberraw = nullptr;
+  std::shared_ptr<TH2D> mPulseHeightperchamberrawHD = nullptr;
+//  std::shared_ptr<TProfile2D> mPulseHeightperchamberHDcorrected = nullptr;
 };
 
 } // namespace o2::quality_control_modules::trd

@@ -78,20 +78,20 @@ class DigitsTask final : public TaskInterface
   std::array<std::shared_ptr<TH2F>, o2::trd::constants::NSECTOR> mHCMCM;
 
   std::shared_ptr<TH1F> mPulseHeight = nullptr;
+  std::shared_ptr<TH1F> mPulseHeightHD = nullptr;
   std::shared_ptr<TH2F> mTotalPulseHeight2D = nullptr;
+  std::shared_ptr<TH2F> mTotalPulseHeight2DHD = nullptr;
   std::array<std::shared_ptr<TH1F>, o2::trd::constants::NSECTOR> mPulseHeight2DperSM;
   std::shared_ptr<TProfile> mPulseHeightpro = nullptr;
+  std::shared_ptr<TProfile> mPulseHeightproHD = nullptr;
   std::shared_ptr<TProfile2D> mPulseHeightperchamber = nullptr;
-  std::shared_ptr<TH1F> mPulseHeightHD = nullptr;
-  std::shared_ptr<TH1F> mPulseHeightHDcorrected = nullptr;
-  std::shared_ptr<TH2F> mTotalPulseHeightHD2D = nullptr;
-  std::shared_ptr<TH2F> mTotalPulseHeightHD2Dcorrected = nullptr;
-  std::array<std::shared_ptr<TH1F>, o2::trd::constants::NSECTOR> mPulseHeightHD2DperSM;
-  std::array<std::shared_ptr<TH1F>, o2::trd::constants::NSECTOR> mPulseHeightHD2DperSMcorrected;
-  std::shared_ptr<TProfile> mPulseHeightHDpro = nullptr;
-  std::shared_ptr<TProfile> mPulseHeightHDprocorrected = nullptr;
-  std::shared_ptr<TProfile2D> mPulseHeightHDperchamber = nullptr;
-  std::shared_ptr<TProfile2D> mPulseHeightHDperchambercorrected = nullptr;
+  std::shared_ptr<TProfile2D> mPulseHeightperchamberHD = nullptr;
+//  std::shared_ptr<TH1F> mPulseHeightHDcorrected = nullptr;
+//  std::shared_ptr<TH2F> mTotalPulseHeightHD2Dcorrected = nullptr;
+  std::array<std::shared_ptr<TH1F>, o2::trd::constants::NSECTOR> mPulseHeight2DperSMHD;
+  std::array<std::shared_ptr<TH1F>, o2::trd::constants::NSECTOR> mPulseHeight2DperSMHDcorrected;
+//  std::shared_ptr<TProfile> mPulseHeightprocorrectedHD = nullptr;
+//  std::shared_ptr<TProfile2D> mPulseHeightperchamberHDcorrected = nullptr;
   std::array<std::shared_ptr<TH2F>, o2::trd::constants::NLAYER> mLayers;
 
   // CCDB objects
