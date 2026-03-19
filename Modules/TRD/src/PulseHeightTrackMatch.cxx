@@ -73,10 +73,20 @@ void PulseHeightTrackMatch::buildHistograms()
   getObjectsManager()->startPublishing(mPulseHeightperchamber.get());
   getObjectsManager()->setDefaultDrawOptions(mPulseHeightperchamber.get()->GetName(), "colz");
   
+  mPulseHeightperchamberraw.reset(new TH2D("PulseHeight/mPulseHeightperchamberraw", "PulseHeight per chamber;Timebin;Chamber", 30, -0.5, 29.5, 540, 0, 540));
+  mPulseHeightperchamberraw.get()->Sumw2();
+  getObjectsManager()->startPublishing(mPulseHeightperchamberraw.get());
+  getObjectsManager()->setDefaultDrawOptions(mPulseHeightperchamberraw.get()->GetName(), "colz");
+  
   mPulseHeightperchamberHD.reset(new TProfile2D("PulseHeight/mPulseHeightperchamberHD", "PulseHeight per chamber;Timebin with PreTriggerPhase;Chamber", 120, -0.5, 29.5, 540, 0, 540));
   mPulseHeightperchamberHD.get()->Sumw2();
   getObjectsManager()->startPublishing(mPulseHeightperchamberHD.get());
   getObjectsManager()->setDefaultDrawOptions(mPulseHeightperchamberHD.get()->GetName(), "colz");
+  
+  mPulseHeightperchamberrawHD.reset(new TProfile2D("PulseHeight/mPulseHeightperchamberrawHD", "PulseHeight per chamber;Timebin with PreTriggerPhase;Chamber", 120, -0.5, 29.5, 540, 0, 540));
+  mPulseHeightperchamberrawHD.get()->Sumw2();
+  getObjectsManager()->startPublishing(mPulseHeightperchamberrawHD.get());
+  getObjectsManager()->setDefaultDrawOptions(mPulseHeightperchamberrawHD.get()->GetName(), "colz");
   
 /*  mPulseHeightperchamberHDcorrected.reset(new TProfile2D("PulseHeight/mPulseHeightperchamberHDcorrected", "PulseHeight per chamber (corrected for phase presence);Timebin with PreTriggerPhase;Chamber", 120, -0.5, 29.5, 540, 0, 540));
   mPulseHeightperchamberHDcorrected.get()->Sumw2();
@@ -147,12 +157,12 @@ void PulseHeightTrackMatch::monitorData(o2::framework::ProcessingContext& ctx)
 {
   auto phDataArr = ctx.inputs().get<gsl::span<o2::trd::PHData>>("phValues");
   auto phDataHDArr = ctx.inputs().get<gsl::span<o2::trd::PHDataHD>>("phValuesHD");
-
   for (const auto& phData : phDataArr) {
     if (mTrackType[phData.getType()]) {
       mPulseHeightpro->Fill(phData.getTimebin(), phData.getADC());
       mPulseHeightperchamber->Fill(phData.getTimebin(), phData.getDetector(), phData.getADC());
       mPulseHeight->Fill(phData.getTimebin(), phData.getADC());
+      mPulseHeight2D->Fill(phData.getTimebin(), phData.getADC());
       mPulseHeightperchamberraw->Fill(phData.getTimebin(), phData.getDetector(), phData.getADC());
     }
   }
@@ -161,6 +171,7 @@ void PulseHeightTrackMatch::monitorData(o2::framework::ProcessingContext& ctx)
       float tb= ((float)phDataHD.getTimebin())/4;
       mPulseHeightproHD->Fill(tb, phDataHD.getADC());
       mPulseHeightHD->Fill(tb, phDataHD.getADC());
+      mPulseHeight2DHD->Fill(tb, phDataHD.getADC());
       mPulseHeightperchamberHD->Fill(tb, phDataHD.getDetector(), phDataHD.getADC());
       mPulseHeightperchamberrawHD->Fill(tb, phDataHD.getDetector(), phDataHD.getADC());
     }
